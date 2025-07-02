@@ -11,19 +11,20 @@ struct ContentView: View {
     @State var result: [Result] = []
     
     var body: some View {
-        // resultの中の要素を1つずつpersonとして受け取る
-        List(result) { person in
-            LabeledContent {
-                Text(person.fullname)
-            } label: {
-                Text("name")
+        List {
+            // resultの中の要素を1つずつpersonとして受け取る
+            ForEach(result) { person in
+                LabeledContent {
+                    Text(person.fullname)
+                } label: {
+                    Text("name")
+                }
             }
         }
         .task {
             await getData()
         }
     }
-    
     struct APIResponse: Codable {
         // "results": [値] apiがこの形 だから[Result]
         let results: [Result]
