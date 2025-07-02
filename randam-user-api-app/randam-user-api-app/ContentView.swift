@@ -64,12 +64,10 @@ struct ContentView: View {
     
     func getData() async {
         do {
-            guard let url = URL(string: "https://randomuser.me/api/?results=1") else { return }
+            guard let url = URL(string: "https://randomuser.me/api/?results=\(userCount)") else { return }
             let (data, _) = try await URLSession.shared.data(from: url)
             let decode = try JSONDecoder().decode(APIResponse.self, from: data)
-            if let newUser = decode.results.first {
-                result.append(newUser)
-            }
+            result = decode.results
         } catch {}
     }
 }
