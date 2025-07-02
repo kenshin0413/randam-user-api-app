@@ -9,14 +9,31 @@ import SwiftUI
 
 struct ContentView: View {
     @State var result: [Result] = []
-    
+    @State var userCount: Int = 1
     var body: some View {
-        // resultの中の要素を1つずつpersonとして受け取る
-        List(result) { person in
-            LabeledContent {
-                Text(person.fullname)
-            } label: {
-                Text("name")
+        List {
+            Stepper("取得するユーザー数: \(userCount)",
+                    // ＋ボタンが押されたときの処理
+                    onIncrement: {
+                userCount += 1
+                Task {
+                    await getData()
+                }
+            },
+                    // -ボタンが押されたときの処理
+                    onDecrement: {
+                if userCount > 0 {
+                    userCount -= 1
+                    result.removeLast()
+                }
+            })
+            
+            ForEach(result) { person in
+                LabeledContent {
+                    Text(person.fullname)
+                } label: {
+                    Text("name")
+                }
             }
         }
         .task {
@@ -47,10 +64,12 @@ struct ContentView: View {
     
     func getData() async {
         do {
-            guard let url = URL(string: "https://randomuser.me/api/?results=10") else { return }
+            guard let url = URL(string: "https://randomuser.me/api/?results=1") else { return }
             let (data, _) = try await URLSession.shared.data(from: url)
-            let decodedData = try JSONDecoder().decode(APIResponse.self, from: data)
-            result = decodedData.results
+            let decode = try JSONDecoder().decode(APIResponse.self, from: data)
+            if let newUser = decode.results.first {
+                result.append(newUser)
+            }
         } catch {}
     }
 }
