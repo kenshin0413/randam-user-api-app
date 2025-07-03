@@ -30,6 +30,7 @@ struct ContentView: View {
                     onDecrement: decrementStep) {
                 Text("取得するユーザー数: \(userCount)")
             }
+            // resultの中の要素を1つずつpersonとして受け取る
             ForEach(result) { person in
                 LabeledContent {
                     Text(person.fullname)
