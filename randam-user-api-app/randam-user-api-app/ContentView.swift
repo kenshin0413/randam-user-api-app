@@ -10,24 +10,26 @@ import SwiftUI
 struct ContentView: View {
     @State var result: [Result] = []
     @State var userCount: Int = 1
+    func incrementStep() {
+        userCount += 1
+        Task {
+            await getData()
+        }
+    }
+    
+    func decrementStep() {
+        if 0 < userCount {
+            userCount -= 1
+            result.removeLast()
+        }
+    }
+    
     var body: some View {
         List {
-            Stepper("取得するユーザー数: \(userCount)",
-                    // ＋ボタンが押されたときの処理
-                    onIncrement: {
-                userCount += 1
-                Task {
-                    await getData()
-                }
-            },
-                    // -ボタンが押されたときの処理
-                    onDecrement: {
-                if userCount > 0 {
-                    userCount -= 1
-                    result.removeLast()
-                }
-            })
-            
+            Stepper(onIncrement: incrementStep,
+                    onDecrement: decrementStep) {
+                Text("取得するユーザー数: \(userCount)")
+            }
             ForEach(result) { person in
                 LabeledContent {
                     Text(person.fullname)
