@@ -10,6 +10,8 @@ import SwiftUI
 struct ContentView: View {
     @State var result: [Result] = []
     @State var userCount: Int = 1
+    @State var showErrorAlert = false
+    @State var errorMessage = ""
     func incrementStep() {
         userCount += 1
         Task {
@@ -42,6 +44,11 @@ struct ContentView: View {
         .task {
             await getData()
         }
+        .alert("エラー", isPresented: $showErrorAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage)
+        }
     }
     
     struct APIResponse: Codable {
@@ -71,7 +78,10 @@ struct ContentView: View {
             let (data, _) = try await URLSession.shared.data(from: url)
             let decode = try JSONDecoder().decode(APIResponse.self, from: data)
             result = decode.results
-        } catch {}
+        } catch {
+            showErrorAlert = true
+            errorMessage = error.localizedDescription
+        }
     }
 }
 
