@@ -27,27 +27,27 @@ struct ContentView: View {
     }
     
     var body: some View {
-        List {
-            Stepper(onIncrement: incrementStep,
-                    onDecrement: decrementStep) {
-                Text("取得するユーザー数: \(userCount)")
-            }
-            // resultの中の要素を1つずつpersonとして受け取る
-            ForEach(result) { person in
-                LabeledContent {
-                    Text(person.fullname)
-                } label: {
-                    Text("name")
+        NavigationStack {
+            List {
+                Stepper(onIncrement: incrementStep,
+                        onDecrement: decrementStep) {
+                    Text("取得するユーザー数: \(userCount)")
+                }
+                // resultの中の要素を1つずつpersonとして受け取る
+                ForEach(result) { person in
+                    NavigationLink(destination: UserInfoView(person: person)) {
+                        Text(person.fullname)
+                    }
                 }
             }
-        }
-        .task {
-            await getData()
-        }
-        .alert("エラー", isPresented: $showErrorAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(errorMessage)
+            .task {
+                await getData()
+            }
+            .alert("エラー", isPresented: $showErrorAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(errorMessage)
+            }
         }
     }
     
@@ -60,9 +60,13 @@ struct ContentView: View {
         // let だと警告が出る
         var id = UUID()
         let name: Name
+        let location: Location
+        let email: String
+        
         private enum CodingKeys: CodingKey {
-            case name  // ← id を除外する
+            case name, location, email  // ← id を除外する
         }
+        
         var fullname: String {
             "\(name.title) \(name.first) \(name.last)"
         }
@@ -70,6 +74,12 @@ struct ContentView: View {
     
     struct Name: Codable {
         let title, first, last: String
+    }
+    
+    struct Location: Codable {
+        let country: String
+        let state: String
+        let city: String
     }
     
     func getData() async {
