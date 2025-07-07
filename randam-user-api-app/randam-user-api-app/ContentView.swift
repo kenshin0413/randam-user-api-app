@@ -12,31 +12,26 @@ struct ContentView: View {
     @State var userCount: Int = 1
     @State var showErrorAlert = false
     @State var errorMessage = ""
-    func incrementStep() {
-        userCount += 1
-        Task {
-            await getData()
-        }
-    }
-    
-    func decrementStep() {
-        if 0 < userCount {
-            userCount -= 1
-            result.removeLast()
-        }
-    }
     
     var body: some View {
         NavigationStack {
             List {
-                Stepper(onIncrement: incrementStep,
-                        onDecrement: decrementStep) {
+                Stepper(value: $userCount, step: 1) {
                     Text("取得するユーザー数: \(userCount)")
                 }
-                // resultの中の要素を1つずつpersonとして受け取る
+                .onChange(of: userCount) {
+                    Task {
+                        await getData()
+                    }
+                }
+                
                 ForEach(result) { person in
                     NavigationLink(destination: UserInfoView(person: person)) {
-                        Text(person.fullname)
+                        LabeledContent {
+                            Text(person.fullname)
+                        } label: {
+                            Text("name")
+                        }
                     }
                 }
             }
@@ -52,34 +47,7 @@ struct ContentView: View {
     }
     
     struct APIResponse: Codable {
-        // "results": [値] apiがこの形 だから[Result]
         let results: [Result]
-    }
-    // IdentifiableはList,ForEachなどでidを省略できる
-    struct Result: Codable, Identifiable {
-        // let だと警告が出る
-        var id = UUID()
-        let name: Name
-        let location: Location
-        let email: String
-        
-        private enum CodingKeys: CodingKey {
-            case name, location, email  // ← id を除外する
-        }
-        
-        var fullname: String {
-            "\(name.title) \(name.first) \(name.last)"
-        }
-    }
-    
-    struct Name: Codable {
-        let title, first, last: String
-    }
-    
-    struct Location: Codable {
-        let country: String
-        let state: String
-        let city: String
     }
     
     func getData() async {
@@ -89,10 +57,36 @@ struct ContentView: View {
             let decode = try JSONDecoder().decode(APIResponse.self, from: data)
             result = decode.results
         } catch {
-            showErrorAlert = true
             errorMessage = error.localizedDescription
+            showErrorAlert = true
         }
     }
+}
+// IdentifiableはList,ForEachなどでidを省略できる
+struct Result: Codable, Identifiable {
+    // let だと警告が出る
+    var id = UUID()
+    let name: Name
+    let location: Location
+    let email: String
+    
+    private enum CodingKeys: CodingKey {
+        case name, location, email  // ← id を除外する
+    }
+    
+    var fullname: String {
+        "\(name.title) \(name.first) \(name.last)"
+    }
+}
+
+struct Name: Codable {
+    let title, first, last: String
+}
+
+struct Location: Codable {
+    let country: String
+    let state: String
+    let city: String
 }
 
 #Preview {

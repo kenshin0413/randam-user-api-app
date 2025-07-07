@@ -8,14 +8,14 @@
 import SwiftUI
 
 struct UserInfoView: View {
-    let person: ContentView.Result
+    let person: Result
     var body: some View {
         Form {
             Section(header: Text("NAME")) {
                 Text(person.fullname)
             }
             
-            Section(header: Text("LOCTION")) {
+            Section(header: Text("LOCATION")) {
                 LabeledContent {
                     Text(person.location.country)
                 } label: {
@@ -43,8 +43,8 @@ struct UserInfoView: View {
 }
 
 #Preview {
-    UserInfoView(person: ContentView.Result(
-        name: ContentView.Name(title: "", first: "", last: ""),
-        location: ContentView.Location(country: "", state: "", city: ""),
+    UserInfoView(person: Result(
+        name: Name(title: "", first: "", last: ""),
+        location: Location(country: "", state: "", city: ""),
         email: ""))
 }
