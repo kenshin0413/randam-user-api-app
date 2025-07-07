@@ -12,54 +12,42 @@ struct ContentView: View {
     @State var userCount: Int = 1
     @State var showErrorAlert = false
     @State var errorMessage = ""
+    
     var body: some View {
-        List {
-            Stepper(value: $userCount, step: 1) {
-                Text("取得するユーザー数: \(userCount)")
-            }
-            .onChange(of: userCount) { oldValue, newValue in
-                Task {
-                    await getData()
+        NavigationStack {
+            List {
+                Stepper(value: $userCount, step: 1) {
+                    Text("取得するユーザー数: \(userCount)")
+                }
+                .onChange(of: userCount) {
+                    Task {
+                        await getData()
+                    }
+                }
+                
+                ForEach(result) { person in
+                    NavigationLink(destination: UserInfoView(person: person)) {
+                        LabeledContent {
+                            Text(person.fullname)
+                        } label: {
+                            Text("name")
+                        }
+                    }
                 }
             }
-            // resultの中の要素を1つずつpersonとして受け取る
-            ForEach(result) { person in
-                LabeledContent {
-                    Text(person.fullname)
-                } label: {
-                    Text("name")
-                }
+            .task {
+                await getData()
             }
-        }
-        .task {
-            await getData()
-        }
-        .alert("エラー", isPresented: $showErrorAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(errorMessage)
+            .alert("エラー", isPresented: $showErrorAlert) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(errorMessage)
+            }
         }
     }
     
     struct APIResponse: Codable {
-        // "results": [値] apiがこの形 だから[Result]
         let results: [Result]
-    }
-    // IdentifiableはList,ForEachなどでidを省略できる
-    struct Result: Codable, Identifiable {
-        // let だと警告が出る
-        var id = UUID()
-        let name: Name
-        private enum CodingKeys: CodingKey {
-            case name  // ← id を除外する
-        }
-        var fullname: String {
-            "\(name.title) \(name.first) \(name.last)"
-        }
-    }
-    
-    struct Name: Codable {
-        let title, first, last: String
     }
     
     func getData() async {
@@ -73,6 +61,32 @@ struct ContentView: View {
             showErrorAlert = true
         }
     }
+}
+// IdentifiableはList,ForEachなどでidを省略できる
+struct Result: Codable, Identifiable {
+    // let だと警告が出る
+    var id = UUID()
+    let name: Name
+    let location: Location
+    let email: String
+    
+    private enum CodingKeys: CodingKey {
+        case name, location, email  // ← id を除外する
+    }
+    
+    var fullname: String {
+        "\(name.title) \(name.first) \(name.last)"
+    }
+}
+
+struct Name: Codable {
+    let title, first, last: String
+}
+
+struct Location: Codable {
+    let country: String
+    let state: String
+    let city: String
 }
 
 #Preview {
