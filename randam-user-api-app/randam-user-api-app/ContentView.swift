@@ -10,25 +10,17 @@ import SwiftUI
 struct ContentView: View {
     @State var result: [Result] = []
     @State var userCount: Int = 1
-    func incrementStep() {
-        userCount += 1
-        Task {
-            await getData()
-        }
-    }
-    
-    func decrementStep() {
-        if 0 < userCount {
-            userCount -= 1
-            result.removeLast()
-        }
-    }
-    
+    @State var showErrorAlert = false
+    @State var errorMessage = ""
     var body: some View {
         List {
-            Stepper(onIncrement: incrementStep,
-                    onDecrement: decrementStep) {
+            Stepper(value: $userCount, step: 1) {
                 Text("取得するユーザー数: \(userCount)")
+            }
+            .onChange(of: userCount) { oldValue, newValue in
+                Task {
+                    await getData()
+                }
             }
             // resultの中の要素を1つずつpersonとして受け取る
             ForEach(result) { person in
@@ -41,6 +33,11 @@ struct ContentView: View {
         }
         .task {
             await getData()
+        }
+        .alert("エラー", isPresented: $showErrorAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(errorMessage)
         }
     }
     
@@ -71,7 +68,10 @@ struct ContentView: View {
             let (data, _) = try await URLSession.shared.data(from: url)
             let decode = try JSONDecoder().decode(APIResponse.self, from: data)
             result = decode.results
-        } catch {}
+        } catch {
+            errorMessage = error.localizedDescription
+            showErrorAlert = true
+        }
     }
 }
 
